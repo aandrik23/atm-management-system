@@ -67,6 +67,7 @@ void mainMenu(struct User user);
 void checkAllAccounts(struct User user);
 void saveAccountToFile(FILE *file, struct User user, struct Record record);
 
+
 // New operations (formerly TODOs)
 void updateAccountInfo(struct User user);
 void viewAccountDetails(struct User user);

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 // Helper function to prompt only for the password (no username), unchanged
 static void promptPassword(char password[50]) {
     struct termios originalFlags, newFlags;
@@ -47,7 +48,7 @@ void initMenu(struct User *user)
             buf[strcspn(buf, "\n")] = '\0';
             choice = strtol(buf, &end, 10);
             if (end == buf || *end != '\0' || choice < 1 || choice > 3) {
-                printf("Invalid choice. Please enter 1, 2, or 3.\n");
+                printf("Invalid choice. Please press 1, 2, or 3.\n");
                 continue;
             }
             break;
@@ -61,7 +62,7 @@ void initMenu(struct User *user)
             int back = 0;
             // Username loop
             while (1) {
-                printf("\n\t\t\t    User Login (Or 0 to go back): ");
+                printf("\n\t\t\tUsername (or press 0 and ENTER to go back): ");
                 if (!fgets(namebuf, sizeof(namebuf), stdin)) {
                     clearerr(stdin);
                     continue;
@@ -90,6 +91,13 @@ void initMenu(struct User *user)
             // Password loop
             while (1) {
                 promptPassword(user->password);
+
+                if (strcmp(user->password, "0") == 0) {
+                    // Go back to username prompt
+                    back = 1;
+                    break;
+                }
+
                 const char *realpass = getPassword(user);
                 if (strcmp(user->password, realpass) == 0) {
                     printf("\nPassword match!\n");
@@ -98,6 +106,9 @@ void initMenu(struct User *user)
                 } else {
                     printf("\nWrong username or password. Please try again.\n");
                 }
+            }
+            if (back) {
+                continue; // Go back to top menu
             }
         }
         else if (choice == 2) {
@@ -184,3 +195,5 @@ int main()
     mainMenu(user);   // Proceed to the main menu after login
     return 0;
 }
+
+

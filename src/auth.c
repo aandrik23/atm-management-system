@@ -70,3 +70,8 @@ const char *getPassword(struct User *user)
     fclose(file);
     return "No user found.";  // Return if no matching user was found
 }
+
+
+
+
+//EXW FTIAXEI TA "0 TO GO BACK" STO LOGIN KAI SO REGISTER!!!

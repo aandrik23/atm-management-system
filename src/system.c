@@ -60,15 +60,21 @@ int registerUser(struct User *u)
 
     printf("\n\t\t======= Registration =======\n\n");
 
-    // Loop until we get a valid, non-duplicate username of length >=4
+    // Loop until we get a valid, non-duplicate username of length >=2
     do {
         exists = 0;
-        printf("Enter a username: ");
+        printf("Enter a username (or press 0 and ENTER to cancel): ");
         scanf("%49s", tempName);
-        // flush any extra chars on the line
         while (getchar() != '\n');
 
-        // enforce minimum length
+        if (strcmp(tempName, "0") == 0) {
+            printf("\nRegistration canceled. Press ENTER to return to main menu.\n");
+            getchar();
+            fclose(file);
+            return 0;  // User canceled registration
+        }
+
+        // Enforce minimum length
         if (strlen(tempName) < 2) {
             printf("Username is too small. Please try again with at least 2 characters.\n\n");
             exists = 1;
@@ -77,11 +83,7 @@ int registerUser(struct User *u)
 
         // Check if the username already exists
         rewind(file);
-        while (fscanf(file, "%d %49s %49s",
-                      &temp.id,
-                      temp.name,
-                      temp.password) == 3)
-        {
+        while (fscanf(file, "%d %49s %49s",&temp.id,temp.name,temp.password) == 3) {
             if (strcasecmp(tempName, temp.name) == 0)
             {
                 printf("Username \"%s\" already exists. Please try again.\n\n", tempName);
@@ -91,33 +93,40 @@ int registerUser(struct User *u)
         }
     } while (exists);
 
-    do {
-    // Prompt for password
-    printf("Enter a password (at least 8 characters): ");
-    scanf("%49s", tempPassword);
-    while (getchar() != '\n');
+    
 
-    if (strlen(tempPassword) < 8 ) {
-        printf("Password is too small. Please try again with at least 8 characters.\n\n");
+    do {
+        printf("Enter a password (at least 8 characters) (or press 0 and ENTER to cancel): ");
+        scanf("%49s", tempPassword);
+        while (getchar() != '\n');
+
+        if (strcmp(tempPassword, "0") == 0) {
+            fclose(file);
+            return 0;  // Cancel
         }
 
-    printf("Confirm password :");
-    scanf("%49s", confirmPassword);
-    while (getchar() != '\n');
+        if (strlen(tempPassword) < 8 ) {
+            printf("Password is too small. Please try again with at least 8 characters.\n\n");
+            }
+    
+        printf("Confirm password :");
+        scanf("%49s", confirmPassword);
+        while (getchar() != '\n');
 
-    if (strcmp(tempPassword, confirmPassword) != 0) {
-        printf("Passwords do not match. Please try again.\n\n");
-    }
-    } while (strlen(tempPassword) < 8 || strcmp(tempPassword, confirmPassword) != 0);
-
+        if (strcmp(confirmPassword, "0") == 0) {
+            fclose(file);
+            return 0;  // Cancel
+        }
+    
+        if (strcmp(tempPassword, confirmPassword) != 0) {
+            printf("Passwords do not match. Please try again.\n\n");
+        }
+        } while (strlen(tempPassword) < 8 || strcmp(tempPassword, confirmPassword) != 0);
+    
     // Assign the next user ID
     rewind(file);
     int maxId = 0;
-    while (fscanf(file, "%d %49s %49s",
-                  &temp.id,
-                  temp.name,
-                  temp.password) == 3)
-    {
+    while (fscanf(file, "%d %49s %49s",&temp.id,temp.name,temp.password) == 3) {
         if (temp.id > maxId) {
             maxId = temp.id;
         }
@@ -203,6 +212,7 @@ invalid:
 void createNewAccount(struct User u) {
     struct Record r, cr;
     char userName[50];
+    char input[50];
     FILE *pf = fopen(RECORDS, "a+");
     if (!pf) {
         perror("Error opening records file.");
@@ -229,28 +239,38 @@ void createNewAccount(struct User u) {
 
         // ——— DATE INPUT ———
         while (1) {
-            printf("\nEnter the deposit date (M/D/YYYY or MM/DD/YYYY): ");
+            printf("\nEnter the deposit date (M/D/YYYY or MM/DD/YYYY) [or press 0 and ENTER to go back to Main Menu]: ");
+            fgets(input, sizeof(input), stdin);
+
+            input[strcspn(input, "\n")] = '\0';
+
+            if (strcmp(input, "0")== 0) {
+                fclose(pf);
+                mainMenu(u);
+                return;
+            }
             // read three integers separated by '/'
-            if (scanf("%d/%d/%d", &m, &d, &y) != 3) {
+            if (sscanf(input, "%d/%d/%d", &m, &d, &y) != 3) {
                 printf("Invalid format. Please use M/D/YYYY or MM/DD/YYYY.\n");
-                while (getchar() != '\n');  // discard rest of line
+                // while (getchar() != '\n');  // discard rest of line
                 continue;
             }
             // clear leftover newline
             while (getchar() != '\n');
+            
 
-            // month/day range
+            // Validate the date
             if (m < 1 || m > 12 || d < 1 || d > 31) {
                 printf("Month/day out of range.\n");
                 continue;
             }
             // year range
-            if (y < 1990 || y > 2050) {
-                printf("Year must be between 1990 and 2050.\n");
+            if (y < 1950 || y > 2150) {
+                printf("Year must be between 1950 and 2150.\n");
                 continue;
             }
 
-            // store valid date
+            // Save valid date
             r.deposit.month = m;
             r.deposit.day   = d;
             r.deposit.year  = y;
@@ -720,7 +740,7 @@ void makeTransaction(struct User u) {
         if (scanf("%d", &accountId) != 1) {
             printf("Invalid input. Please enter a number.\n");
             while (getchar() != '\n');    // flush bad input
-            printf("Press Enter to try again...");
+            printf("Press Enter to try again.");
             getchar();
             continue;                      // back to step 1
         }
@@ -753,7 +773,7 @@ void makeTransaction(struct User u) {
                     fclose(in);
                     fclose(out);
                     remove(tmpPath);
-                    printf("Press ENTER to continue...");
+                    printf("Press ENTER to continue.");
                     getchar();
                     success(u);
                     return;
@@ -834,7 +854,7 @@ void makeTransaction(struct User u) {
         if (!found) {
             remove(tmpPath);
             printf("Account %d not found or you don't have access.\n", accountId);
-            printf("Press Enter to try again...");
+            printf("Press Enter to try again.");
             getchar();
             continue;  // back to step 1
         }
@@ -862,7 +882,7 @@ void removeAccount(struct User u) {
         if (scanf("%d", &accountId) != 1) {
             printf("Invalid input. Please enter a number.\n");
             while (getchar() != '\n');    // flush bad input
-            printf("Press Enter to try again...");
+            printf("Press Enter to try again.");
             getchar();
             continue;                      // back to prompt
         }
@@ -907,7 +927,7 @@ void removeAccount(struct User u) {
         if (!found) {
             remove(tmpPath);
             printf("\nAccount %d not found or you don't have access.\n", accountId);
-            printf("Press Enter to try again...");
+            printf("Press Enter to try again.");
             getchar();
             continue;  // back to step 1
         }
@@ -936,7 +956,7 @@ void transferOwnership(struct User u) {
         if (scanf("%d", &accountId) != 1) {
             printf("Invalid input. Please enter a number.\n");
             while (getchar() != '\n');
-            printf("Press Enter to try again...");
+            printf("Press Enter to try again.");
             getchar();
             continue;
         }
@@ -1065,7 +1085,7 @@ void transferOwnership(struct User u) {
         if (!found) {
             remove(tmpPath);
             printf("\nAccount %d not found or you don't have access.\n", accountId);
-            printf("Press Enter to try again...");
+            printf("Press Enter to try again.");
             getchar();
             continue;
         }
