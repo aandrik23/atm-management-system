@@ -1,9 +1,8 @@
-#include <stdio.h>   // Input/output functions
-#include <stdlib.h>  // General utils, memory allocation, program control
-#include <string.h>  // String handling routines
-
-extern const char *USERS;
-extern const char *RECORDS;
+#include <stdio.h>    
+#include <stdlib.h>   
+#include <string.h>   
+extern const char *USERS; // User database file
+extern const char *RECORDS; // Records database file
 
 static const char *ISO_COUNTRY_CODES[] = {
     "AD","AE","AF","AG","AI","AL","AM","AO","AQ","AR","AS","AT","AU","AW","AX","AZ",
@@ -20,10 +19,11 @@ static const char *ISO_COUNTRY_CODES[] = {
     "PL","PM","PN","PR","PT","PW","PY","QA","RE","RO","RS","RU","RW","SA","SB","SC",
     "SD","SE","SG","SH","SI","SJ","SK","SL","SM","SN","SO","SR","SS","ST","SV","SX",
     "SY","SZ","TC","TD","TF","TG","TH","TJ","TK","TL","TM","TN","TO","TR","TT","TV",
-    "TZ","UA","UG","UM","US","UY","UZ","VA","VC","VE","VG","VI","VN","VU","WF","WS",
+    "TZ","UA","UG","UK","UM","US","UY","UZ","VA","VC","VE","VG","VI","VN","VU","WF","WS",
     "YE","YT","ZA","ZM","ZW",
     NULL
 };
+
 
 
 struct Date
@@ -31,21 +31,21 @@ struct Date
     int month, day, year;
 };
 
-// Account record structure
+// Structure to represent a bank account record
 struct Record
 {
-    int id;
-    int userId;
-    char country[100];
-    long long int phone;
-    char accountType[10];
-    int accountNbr;
-    double amount;
-    struct Date deposit;
-    struct Date withdraw;
+    int id;                 // Unique record ID
+    int userId;             // ID of the user who owns this account
+    char country[100];      // Country of the user (must be in ISO_COUNTRY_CODES)
+    long long int phone;    // Phone number
+    char accountType[10];   // Type of account (e.g., "savings", "checking")
+    int accountNbr;         // Account number (unique)
+    double amount;          // Current balance
+    struct Date deposit;    // Date of last deposit
+    struct Date withdraw;   // Date of last withdrawal
 };
 
-// User structure
+// Structure to represent the user
 struct User
 {
     int id;
@@ -55,12 +55,13 @@ struct User
 
 // Authentication functions
 void loginMenu(char username[50], char password[50]);
+// Retrieves password for a given user
 const char *getPassword(struct User *user);
 
-// File operations for account records
+// File operations
 int getAccountFromFile(FILE *file, char username[50], struct Record *record);
 
-// System functions
+// System control functions
 int registerUser(struct User *user);
 void createNewAccount(struct User user);
 void mainMenu(struct User user);
@@ -68,7 +69,7 @@ void checkAllAccounts(struct User user);
 void saveAccountToFile(FILE *file, struct User user, struct Record record);
 
 
-// New operations (formerly TODOs)
+// Additional operations (formerly TODOs) 
 void updateAccountInfo(struct User user);
 void viewAccountDetails(struct User user);
 void makeTransaction(struct User user);

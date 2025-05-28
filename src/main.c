@@ -5,22 +5,29 @@
 #include <string.h>
 
 
-// Helper function to prompt only for the password (no username), unchanged
+// Helper function to prompt only for the password (without echoing input)
 static void promptPassword(char password[50]) {
     struct termios originalFlags, newFlags;
+    // Save current terminal settings
     tcgetattr(fileno(stdin), &originalFlags);
     newFlags = originalFlags;
-    newFlags.c_lflag &= ~ECHO;    // Disable echo
-    newFlags.c_lflag |= ECHONL;   // Echo newline after enter
+    // Disable echoing input characters (password will be hiden)
+    newFlags.c_lflag &= ~ECHO;
+    // Ensure newline is still echoed when user presses ENTER    
+    newFlags.c_lflag |= ECHONL; 
+    // Apply the modified terminal settings 
     tcsetattr(fileno(stdin), TCSANOW, &newFlags);
 
+    // Promt for password input
     printf("\n\n\t\tEnter your password: ");
     scanf("%49s", password);
+    // Restore original terminal settings
     tcsetattr(fileno(stdin), TCSANOW, &originalFlags);
-    while (getchar() != '\n');  // Clear leftover newline
+    // Clear any extra input left in buffer
+    while (getchar() != '\n'); 
 }
 
-// Main menu initialization
+// Login/register/exit menu
 void initMenu(struct User *user)
 {
     char buf[64];
@@ -30,7 +37,7 @@ void initMenu(struct User *user)
     int loggedIn = 0;
 
     while (!loggedIn) {
-        // Display top-level menu
+        // Clear the screen and display menu
         system("clear");
         printf("\n\n\t\t======= ATM =======\n");
         printf("\n\t\t-->> Feel free to login / register :\n\n");
@@ -38,15 +45,18 @@ void initMenu(struct User *user)
         printf("\t\t[2] - Register\n");
         printf("\t\t[3] - Exit\n\n");
 
-        // Prompt for a choice (1–3)
+        // Prompt for user menu selection (1-3)
         while (1) {
             printf("\t\tEnter your choice: ");
             if (!fgets(buf, sizeof(buf), stdin)) {
                 clearerr(stdin);
                 continue;
             }
+            // Remove newline character from input
             buf[strcspn(buf, "\n")] = '\0';
+            // Convert input to integer
             choice = strtol(buf, &end, 10);
+            // Validate that input is a number within 1–3
             if (end == buf || *end != '\0' || choice < 1 || choice > 3) {
                 printf("Invalid choice. Please press 1, 2, or 3.\n");
                 continue;
@@ -60,7 +70,7 @@ void initMenu(struct User *user)
             printf("\n\n\n\t\t\tBank Management System\n");
 
             int back = 0;
-            // Username loop
+            // Username input loop
             while (1) {
                 printf("\n\t\t\tUsername (or press 0 and ENTER to go back): ");
                 if (!fgets(namebuf, sizeof(namebuf), stdin)) {
@@ -69,36 +79,39 @@ void initMenu(struct User *user)
                 }
                 namebuf[strcspn(namebuf, "\n")] = '\0';
 
+                // Go back to main menu if user press 0
                 if (strcmp(namebuf, "0") == 0) {
                     back = 1;
                     break;
                 }
 
-                // Set the username
+                // Copy entered username to user struct
                 strcpy(user->name, namebuf);
 
+                // Check if username exists
                 const char *realpass = getPassword(user);
                 if (strcmp(realpass, "no user found") == 0) {
                     printf("Username \"%s\" does not exist. Please try again.\n", user->name);
-                    continue;  // Retry username
+                    continue;  // Try again
                 }
                 break;  // Valid username
             }
             if (back) {
-                continue;  // Go back to menu
+                continue;  // Return to menu
             }
 
-            // Password loop
+            // Password input loop
             while (1) {
                 promptPassword(user->password);
 
+                // Allow user to cancel password input by entering 0
                 if (strcmp(user->password, "0") == 0) {
-                    // Go back to username prompt
                     back = 1;
                     break;
                 }
 
                 const char *realpass = getPassword(user);
+                // Validate password
                 if (strcmp(user->password, realpass) == 0) {
                     printf("\nPassword match!\n");
                     loggedIn = 1;
@@ -108,7 +121,7 @@ void initMenu(struct User *user)
                 }
             }
             if (back) {
-                continue; // Go back to top menu
+                continue; // Return to menu
             }
         }
         else if (choice == 2) {
@@ -118,7 +131,7 @@ void initMenu(struct User *user)
             }
         }
         else {
-            // Exit
+            // Exit from the program
             exit(0);
         }
     }
@@ -132,6 +145,7 @@ void mainMenu(struct User user)
     char *end;
 
     while (1) {
+        // Clear screen and show available actions
         system("clear");
         printf("\n\n\t\t======= ATM =======\n\n");
         printf("\t\t-->> Feel free to choose one of the options below <<--\n\n");
@@ -145,7 +159,8 @@ void mainMenu(struct User user)
         printf("\t\t[8] - Exit\n\n");
 
         printf("\t\tEnter your choice: ");
-        // Keep asking until we get a valid choice 1–8
+        
+        // Loop until valid input between 1–8 is entered
         while (1) {
             if (!fgets(buf, sizeof(buf), stdin)) {
                 clearerr(stdin);
@@ -153,28 +168,29 @@ void mainMenu(struct User user)
             }
             buf[strcspn(buf, "\n")] = '\0';
             
-            // 1) Blank line? Silently retry
+            // Ignore empty input
             if (buf[0] == '\0') {
                 continue;
             }
             
+            // Convert input to integer
             choice = strtol(buf, &end, 10);
             
-            // 2) Non-numeric? Silently retry
+            // Check for valid number
             if (end == buf || *end != '\0') {
                 continue;
             }
             
-            // 3) Numeric but out of range? Show error
+            // Ensure number is in range 1–8
             if (choice < 1 || choice > 8) {
                 printf("Invalid choice. Please enter a number between 1 and 8.\n");
                 continue;
             }
 
-            // 4) Good choice: break out
             break;
         }
 
+        // Perform the selected operation
         switch (choice) {
             case 1: createNewAccount(user);        break;
             case 2: updateAccountInfo(user);   break;
@@ -191,8 +207,12 @@ void mainMenu(struct User user)
 int main()
 {
     struct User user;
-    initMenu(&user);  // Initialize menu and login/register flow
-    mainMenu(user);   // Proceed to the main menu after login
+    // Start login/register process
+    initMenu(&user);
+
+    // Once authenticated, show the main ATM menu
+    mainMenu(user);
+
     return 0;
 }
 

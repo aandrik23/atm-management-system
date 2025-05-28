@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 
-const char *USERS = "./data/users.txt"; //user data storage
+const char *USERS = "./data/users.txt"; // Path to user databas file
 const char *RECORDS = "./data/records.txt"; //records data storage
 
 int iso() {
@@ -13,18 +13,18 @@ int iso() {
     return 0;
 }
 
-// returns 1 if s is a strictly positive number (integer or decimal), and nothing else
+// Checks if s represents a positive number
 static int isValidPositiveNumber(const char *s) {
     if (!s || !*s) return 0;
     char *end;
     double v = strtod(s, &end);
-    // must have consumed something, end must be at string-end, and v > 0
+    // Must consume input, reach end of string, and value > 0
     return end != s 
         && *end == '\0' 
         && v > 0.0;
 }
 
-// returns 1 if s is non-empty and every character is '0'–'9'
+// Returns 1 if the string contains only digits (0–9), otherwise returns 0.
 static int isAllDigits(const char *s) {
     if (!s || !*s) return 0;
     for (size_t i = 0; s[i]; ++i) {
@@ -33,6 +33,7 @@ static int isAllDigits(const char *s) {
     return 1;
 }
 
+//Checks whether a given 2-letter code s is a valid ISO country code (must match exactly one in the list).
 static int isValidCountryCode(const char *s) {
     if (!s || strlen(s) != 2) return 0;
     for (int i = 0; ISO_COUNTRY_CODES[i] != NULL; i++) {
@@ -45,7 +46,7 @@ static int isValidCountryCode(const char *s) {
 
 int registerUser(struct User *u)
 {
-    FILE *file = fopen(USERS, "a+");
+    FILE *file = fopen(USERS, "a+"); // Open the users file in read/write (append) mode
     if (!file)
     {
         perror("Error opening users file.");
@@ -60,12 +61,12 @@ int registerUser(struct User *u)
 
     printf("\n\t\t======= Registration =======\n\n");
 
-    // Loop until we get a valid, non-duplicate username of length >=2
+    // Username registration loop
     do {
         exists = 0;
         printf("Enter a username (or press 0 and ENTER to cancel): ");
         scanf("%49s", tempName);
-        while (getchar() != '\n');
+        while (getchar() != '\n'); // Clear input buffer
 
         if (strcmp(tempName, "0") == 0) {
             printf("\nRegistration canceled. Press ENTER to return to main menu.\n");
@@ -74,14 +75,14 @@ int registerUser(struct User *u)
             return 0;  // User canceled registration
         }
 
-        // Enforce minimum length
+        // Enforce minimum username length
         if (strlen(tempName) < 2) {
             printf("Username is too small. Please try again with at least 2 characters.\n\n");
             exists = 1;
             continue;
         }
 
-        // Check if the username already exists
+        // Check for duplicate usernames
         rewind(file);
         while (fscanf(file, "%d %49s %49s",&temp.id,temp.name,temp.password) == 3) {
             if (strcasecmp(tempName, temp.name) == 0)
@@ -94,7 +95,7 @@ int registerUser(struct User *u)
     } while (exists);
 
     
-
+    // Password entry loop
     do {
         printf("Enter a password (at least 8 characters) (or press 0 and ENTER to cancel): ");
         scanf("%49s", tempPassword);
@@ -102,7 +103,7 @@ int registerUser(struct User *u)
 
         if (strcmp(tempPassword, "0") == 0) {
             fclose(file);
-            return 0;  // Cancel
+            return 0;  // User canceled
         }
 
         if (strlen(tempPassword) < 8 ) {
@@ -115,7 +116,7 @@ int registerUser(struct User *u)
 
         if (strcmp(confirmPassword, "0") == 0) {
             fclose(file);
-            return 0;  // Cancel
+            return 0;  // User canceled
         }
     
         if (strcmp(tempPassword, confirmPassword) != 0) {
@@ -123,7 +124,7 @@ int registerUser(struct User *u)
         }
         } while (strlen(tempPassword) < 8 || strcmp(tempPassword, confirmPassword) != 0);
     
-    // Assign the next user ID
+    // Assign unique user ID
     rewind(file);
     int maxId = 0;
     while (fscanf(file, "%d %49s %49s",&temp.id,temp.name,temp.password) == 3) {
@@ -133,7 +134,7 @@ int registerUser(struct User *u)
     }
     u->id = maxId + 1;
 
-    // Copy data into the passed-in struct
+    // Save user info to struct
     strcpy(u->name, tempName);
     strcpy(u->password, tempPassword);
 
@@ -142,7 +143,7 @@ int registerUser(struct User *u)
     fclose(file);
 
     printf("\nRegistration successful! Press ENTER to continue.\n\n");
-    getchar();  // wait for ENTER
+    getchar();  // wait for user to press ENTER
     return 1;
 }
 
@@ -249,13 +250,12 @@ void createNewAccount(struct User u) {
                 mainMenu(u);
                 return;
             }
-            // read three integers separated by '/'
+            // Read 3 intigers separated by '/'
             if (sscanf(input, "%d/%d/%d", &m, &d, &y) != 3) {
                 printf("Invalid format. Please use M/D/YYYY or MM/DD/YYYY.\n");
-                // while (getchar() != '\n');  // discard rest of line
+                // while (getchar() != '\n'); 
                 continue;
             }
-            // clear leftover newline
             while (getchar() != '\n');
             
 
@@ -264,7 +264,6 @@ void createNewAccount(struct User u) {
                 printf("Month/day out of range.\n");
                 continue;
             }
-            // year range
             if (y < 1950 || y > 2150) {
                 printf("Year must be between 1950 and 2150.\n");
                 continue;
@@ -277,7 +276,7 @@ void createNewAccount(struct User u) {
             break;
         }
 
-        // ——— ACCOUNT NUMBER ———
+    // ——— ACCOUNT NUMBER ———
     while (1) {
         int accountExists = 0;
         printf("\nEnter the account number: ");
@@ -319,21 +318,20 @@ void createNewAccount(struct User u) {
             int c;
             while ((c = getchar()) != '\n' && c != EOF);
         }
-        // strip newline if present
         line[strcspn(line, "\n")] = '\0';
 
-        // must be exactly two characters
+        // Must be exactly 2 characters
         if (strlen(line) != 2) {
             printf("Please enter exactly two letters (e.g. US).\n");
             continue;
         }
-        // both must be uppercase A–Z
+        // Both must be uppercase A–Z
         if (!isupper((unsigned char)line[0]) ||
             !isupper((unsigned char)line[1])) {
             printf("Both characters must be uppercase A–Z.\n");
             continue;
         }
-        // check against valid‐codes list
+        // Check against ISO_COUNTRY_CODES list
         strcpy(code, line);
         if (!isValidCountryCode(code)) {
             printf("“%s” is not a valid ISO country code.\n", code);
@@ -361,6 +359,7 @@ void createNewAccount(struct User u) {
             continue;
         }
 
+        // If all characters are digits, convert the phone number to long long 
         r.phone = atoll(phone_buf);
         if (r.phone <= 0) {
             printf("Phone number must be positive digits.\n");
@@ -378,7 +377,6 @@ while (1) {
         clearerr(stdin);
         continue;
     }
-    // strip trailing newline
     amt_buf[strcspn(amt_buf, "\n")] = '\0';
 
     if (!isValidPositiveNumber(amt_buf)) {
@@ -386,6 +384,7 @@ while (1) {
         continue;
     }
 
+    // If the number is valid , saved it to r.amount
     r.amount = strtod(amt_buf, NULL);
     break;
 }
@@ -403,7 +402,6 @@ while (1) {
         "Enter your choice (1-5): "
     );
     int ret = scanf("%d", &typeChoice);
-    // clear rest of line
     while (getchar() != '\n');
 
     if (ret != 1 || typeChoice < 1 || typeChoice > 5) {
@@ -411,6 +409,7 @@ while (1) {
         continue;
     }
 
+    // If the choise is correct , save it to r.account
     switch (typeChoice) {
         case 1: strcpy(r.accountType, "savings"); break;
         case 2: strcpy(r.accountType, "current"); break;
@@ -421,7 +420,7 @@ while (1) {
     break;
 }
 
-        // ——— SAVE & FINISH ———
+        // ——— SAVE ———
         saveAccountToFile(pf, u, r);
         fclose(pf);
         printf("\nAccount created successfully!\n");
@@ -431,6 +430,7 @@ while (1) {
     }
 }
 
+// Read all the accounts of user and print them.
 void checkAllAccounts(struct User u)
 {
     char userName[100];
@@ -459,12 +459,14 @@ void checkAllAccounts(struct User u)
             found = 1;
         }
     }
+
+    // If there is not an account print the message.
     if (!found)
     {
         printf("\nNo accounts found for user %s.\n", u.name);
     }
     fclose(pf);
-    success(u);  // Returning to the main menu after checking the list
+    success(u);  // Returning to the main menu after checking the list.
 }
 
 void updateAccountInfo(struct User u) {
@@ -479,15 +481,15 @@ void updateAccountInfo(struct User u) {
         // ─── YOUR PROMPT & VALIDATION ───
         system("clear");
         printf("\n\t\t=== Update Account Information ===\n");
-        printf("Enter the account number to update (or 0 to go back): ");
+        printf("Enter the account number to update: ");
         if (scanf("%d", &accountId) != 1) {
-            printf("Invalid input. Please enter a number.\n");
-            while (getchar() != '\n');     // flush bad input
+            printf("Invalid input. Please enter a number (or press 0 and ENTER to go bak to Main Menu).\n");
+            while (getchar() != '\n');    
             printf("Press ENTER to try again.");
             getchar();
-            continue;                       // ← back to step 1
+            continue;
         }
-        while (getchar() != '\n');         // flush newline
+        while (getchar() != '\n');
         if (accountId == 0) {
             mainMenu(u);
             return;
@@ -514,7 +516,7 @@ void updateAccountInfo(struct User u) {
             printf("  Country: %s\n", r.country);
             printf("  Phone number: %lld\n", r.phone);
             printf("  Amount deposited: $%.2f\n", r.amount);
-            printf("  Account Type: %s\n\n", r.accountType);
+           printf("  Account Type: %s\n\n", r.accountType);
 
             // — Choose field to update —
             int option;
@@ -524,11 +526,17 @@ void updateAccountInfo(struct User u) {
                 printf("  [2] Country code\n");
                 printf("Enter your choice (1-2): ");
                 if (scanf("%d", &option) != 1) {
-                    printf("Invalid input. Enter 1 or 2.\n");
+                    printf("Invalid input. Enter 1 or 2 (or press 0 and ENTER to go back to Main Menu).\n");
                     while (getchar() != '\n');
                     continue;
                 }
                 while (getchar() != '\n');
+
+                while (getchar() != '\n');
+                if (accountId == 0) {
+                    mainMenu(u);
+                  return;
+                }
 
                 if (option == 1) {
                     // — Update phone —
@@ -582,7 +590,7 @@ void updateAccountInfo(struct User u) {
             }
         } 
 
-        // — Write (possibly updated) record to temp file —
+        // Write possibly updated record to temp file —
             fprintf(out,
                 "%d %d %s %d %02d/%02d/%04d %s %lld %.2f %s\n",
                 r.id, r.userId, name,
@@ -597,16 +605,16 @@ void updateAccountInfo(struct User u) {
         fclose(in);
         fclose(out);
 
-        // ─── NOT FOUND? RETRY ───
+        // ─── NOT FOUND───
         if (!found) {
             remove(tmpPath);
             printf("Account %d not found or you don't have access.\n", accountId);
             printf("Press ENTER to try again.");
             getchar();
-            continue;   // ← back to step 1
+            continue;
         }
 
-        // ─── SUCCESS! SWAP FILES & RETURN ───
+        // ─── SUCCESS ───
         remove(RECORDS);
         rename(tmpPath, RECORDS);
         printf("\nAccount updated successfully!\n\n");
@@ -616,7 +624,7 @@ void updateAccountInfo(struct User u) {
 }
 
 void viewAccountDetails(struct User u) {
-    const char *tmpPath = "./data/records.tmp";  // not used here, but consistent naming
+    const char *tmpPath = "./data/records.tmp"; 
     char name[50];
     struct Record r;
     int accountId, found;
@@ -629,12 +637,13 @@ void viewAccountDetails(struct User u) {
         printf("Enter the account number to view (or 0 to go back): ");
         if (scanf("%d", &accountId) != 1) {
             printf("Invalid input. Please enter a number.\n");
-            while (getchar() != '\n');     // flush bad input
+            while (getchar() != '\n');    
             printf("Press ENTER to try again.");
+            // Give the prompt back
             getchar();
-            continue;                       // back to prompt
+            continue;                      
         }
-        while (getchar() != '\n');         // flush newline
+        while (getchar() != '\n');
         if (accountId == 0) {
             mainMenu(u);
             return;
@@ -656,12 +665,12 @@ void viewAccountDetails(struct User u) {
         }
         fclose(in);
 
-        // ─── Handle not-found vs. display-details ───
+        // ─── Handle not-found or display-details ───
         if (!found) {
             printf("\nAccount %d not found or you don't have access.\n", accountId);
             printf("Press ENTER to try again.");
             getchar();
-            continue;   // back to prompt step 1
+            continue;
         }
 
         // ─── Display the record ───
@@ -697,20 +706,19 @@ void viewAccountDetails(struct User u) {
             }
 
             if (strcmp(r.accountType, "savings") == 0) {
-                // monthly interest for savings
+                // Monthly interest for savings
                 double interest = r.amount * rate / 12.0;
-                printf("You will get $%.2f as interest on day %d of every month\n",
+                printf("You will get $%.2f as interest on day %d of every month!\n",
                        interest, r.deposit.day);
             }
             else {
-                // one-time maturity interest for fixed accounts
                 double interest = r.amount * rate * term;
-                // compute maturity date = deposit date + term years
+                // Compute maturity date = deposit date + term years
                 struct tm tm = {0};
                 tm.tm_mday = r.deposit.day;
                 tm.tm_mon  = r.deposit.month - 1;
                 tm.tm_year = r.deposit.year  - 1900 + term;
-                mktime(&tm);  // normalize
+                mktime(&tm);  // Normalize
                 printf("You will get $%.2f as interest on maturity date %02d/%02d/%04d\n",
                        interest,
                        tm.tm_mon + 1,
@@ -736,15 +744,15 @@ void makeTransaction(struct User u) {
         // ─── Prompt & validate the account number ───
         system("clear");
         printf("\n\t\t=== Make Transaction ===\n");
-        printf("Enter the account number for transaction (or 0 to go back): ");
+        printf("Enter the account number for transaction [or press 0 and ENTER to go back]: ");
         if (scanf("%d", &accountId) != 1) {
             printf("Invalid input. Please enter a number.\n");
-            while (getchar() != '\n');    // flush bad input
-            printf("Press Enter to try again.");
+            while (getchar() != '\n');    
+            printf("Press Enter to try again [or press 0 and ENTER to go back].");
             getchar();
-            continue;                      // back to step 1
+            continue; 
         }
-        while (getchar() != '\n');        // flush newline
+        while (getchar() != '\n'); 
         if (accountId == 0) {
             mainMenu(u);
             return;
@@ -805,9 +813,9 @@ void makeTransaction(struct User u) {
                 char amt_buf[64];
                 while (1) {
                     if (option == 1)
-                        printf("Enter amount to deposit (positive): $");
+                        printf("Enter amount to deposit (positive)[or press 0 and ENTER to go back to Main Menu]: $");
                     else
-                        printf("Enter amount to withdraw (positive): $");
+                        printf("Enter amount to withdraw (positive) [or press 0 and ENTER to go back to Main Menu]: $");
 
                     if (!fgets(amt_buf, sizeof amt_buf, stdin)) {
                         clearerr(stdin);
@@ -815,11 +823,26 @@ void makeTransaction(struct User u) {
                     }
                     amt_buf[strcspn(amt_buf, "\n")] = '\0';
 
+                    while (getchar() != '\n'); 
+                    if (accountId == 0) {
+                        mainMenu(u);
+                    return;
+                    }
+
                     if (!isValidPositiveNumber(amt_buf)) {
-                        printf("Invalid amount. Please enter a positive number.\n");
+                        printf("Invalid amount. Please enter a positive number [or press 0 and ENTER to go back to Main Menu].\n");
                         continue;
                     }
                     amt = strtod(amt_buf, NULL);
+
+                    if (strcmp(amt_buf, "0") == 0) {
+                        printf("Transaction canceled.\n");
+                        fclose(in);
+                        fclose(out);
+                        remove(tmpPath);
+                        mainMenu(u);
+                        return;
+                    }
 
                     if (option == 2 && amt > r.amount) {
                         printf("Insufficient funds. Try a smaller amount.\n");
@@ -878,15 +901,15 @@ void removeAccount(struct User u) {
         // ─── Prompt & validate the account number ───
         system("clear");
         printf("\n\t\t=== Remove Account ===\n");
-        printf("Enter the account number to remove (or 0 to go back): ");
+        printf("Enter the account number to remove [or press 0 and ENTER to go back to Main Menu]: ");
         if (scanf("%d", &accountId) != 1) {
             printf("Invalid input. Please enter a number.\n");
-            while (getchar() != '\n');    // flush bad input
-            printf("Press Enter to try again.");
+            while (getchar() != '\n');    
+            printf("Press Enter to try again [or press 0 and ENTER to go back to Main Menu].");
             getchar();
-            continue;                      // back to prompt
+            continue;                  
         }
-        while (getchar() != '\n');        // flush newline
+        while (getchar() != '\n');      
         if (accountId == 0) {
             mainMenu(u);
             return;
@@ -929,7 +952,7 @@ void removeAccount(struct User u) {
             printf("\nAccount %d not found or you don't have access.\n", accountId);
             printf("Press Enter to try again.");
             getchar();
-            continue;  // back to step 1
+            continue; 
         }
 
         // ─── Success: swap files & return ───
@@ -980,15 +1003,15 @@ void transferOwnership(struct User u) {
             if (!found && r.userId == u.id && r.accountNbr == accountId) {
                 found = 1;
 
-                // • Show current owner info
+                // Show current owner info
                 printf("\nCurrent owner of account %d is user ID %d (%s)\n\n",
                        r.accountNbr, r.userId, name);
 
-                // • Prompt for new owner’s username
+                // Prompt for new owner’s username
                 char newOwnerName[50];
                 int newOwnerId;
                 while (1) {
-                    printf("Enter the new owner’s username: ");
+                    printf("Enter the new owner’s username [or press 0 and ENTER to go back to Main Menu]: ");
                     if (!fgets(newOwnerName, sizeof newOwnerName, stdin)) {
                         clearerr(stdin);
                         continue;
@@ -999,7 +1022,15 @@ void transferOwnership(struct User u) {
                         continue;
                     }
 
-                    // look up that username in USERS
+                    if (strcmp(newOwnerName, "0") == 0) {
+                        fclose(in);
+                        fclose(out);
+                        remove(tmpPath);
+                        mainMenu(u);
+                        return;
+                    }
+
+                    // Check that username is in USERS
                     FILE *uf = fopen(USERS, "r");
                     if (!uf) {
                         perror("Error opening users file");
